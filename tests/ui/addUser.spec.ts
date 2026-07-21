@@ -56,7 +56,7 @@ test('Add user via UI shows error for duplicate email', async ({ page, request }
 
   const alert = await createUserPage.getAlert();
   await expect(alert).toBeVisible();
-  await expect(alert).toContainText(/email.*already (exists|taken|in use)/i);
+  await expect(alert).toContainText('email already exists');
 });
 
 test('Add user via UI Create User button is disabled until all fields are filled', async ({ page }) => {
