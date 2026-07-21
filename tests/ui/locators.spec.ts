@@ -19,6 +19,10 @@ test.describe('Locator practice — /users (list page)', () => {
     await page.goto(`${BASE_URL}/users`);
   });
 
+  test.afterEach(async ({ request }) => {
+    await request.post(`${BASE_URL}/api/seed`);
+  });
+
   test('service-name nav link is visible', async ({ page }) => {
     // TODO: replace page.locator('TODO') with page.getByRole(...) using the correct role and name
     const link = page.getByRole('link', { name: 'User Directory' });
