@@ -5,7 +5,7 @@ export default defineConfig({
   reporter: [['html']],
   use: {
     baseURL: process.env.BASE_URL || 'http://localhost:3000',
-    trace: 'on',  // E10: view with `npx playwright show-trace`
+    trace: 'on-first-retry',  // E10: view with `npx playwright show-trace`
     // headless: false,       // uncomment to watch tests run in the browser
   },
 });
