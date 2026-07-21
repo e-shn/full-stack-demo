@@ -33,7 +33,9 @@ test('create user via POM — happy path @smoke', async ({ page }) => {
   await createPage.goto();
 
   // TODO: call createPage.fillForm(testUser)
+  createPage.fillForm(testUser.firstName, testUser.lastName, testUser.email, testUser.password);
   // TODO: call createPage.submit()
+  await createPage.submit();
 
   await expect(page).toHaveURL(/\/users/);
   await expect(page.getByText(testUser.firstName, { exact: true })).toBeVisible();
