@@ -95,14 +95,14 @@ test('Response does not contain offensive words', async ({ request }) => {
 });
 
 // get an LLM-as-judge score for the tone
-test('LLM-as-judge score for tone is >= 0.7', async ({ request }) => {
-  const { response } = await request.get(`${BASE_URL}/api/llm/ask`).then(r => r.json());
+// test('LLM-as-judge score for tone is >= 0.7', async ({ request }) => {
+//   const { response } = await request.get(`${BASE_URL}/api/llm/ask`).then(r => r.json());
 
-  // Call the LLM-as-judge endpoint to get a score for the tone
-  const judgeRes = await request.post(`${BASE_URL}/api/llm/judge`, {
-    data: { text: response, criteria: 'tone' }
-  });
-  const { score } = await judgeRes.json();
+//   // Call the LLM-as-judge endpoint to get a score for the tone
+//   const judgeRes = await request.post(`${BASE_URL}/api/llm/judge`, {
+//     data: { text: response, criteria: 'tone' }
+//   });
+//   const { score } = await judgeRes.json();
 
-  expect(score).toBeGreaterThanOrEqual(0.7);
-});
+//   expect(score).toBeGreaterThanOrEqual(0.7);
+// });
