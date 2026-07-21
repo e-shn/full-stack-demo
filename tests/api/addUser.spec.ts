@@ -6,10 +6,6 @@ test.beforeEach(async ({ request }) => {
   await request.post(`${BASE_URL}/api/seed`);
 });
 
-test.afterEach(async ({ request }) => {
-  await request.post(`${BASE_URL}/api/seed`);
-});
-
 function uniqueEmail() {
   return `api.user+${Date.now()}@example.com`;
 }
