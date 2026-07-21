@@ -14,13 +14,6 @@ const testUser = {
   password: 'SecurePass123!',
 };
 
-test.afterEach(async ({ request }) => {
-  // Cleanup: delete user by email via API if endpoint exists
-  await request.delete(`${BASE_URL}/api/users`, {
-    data: { email: testUser.email },
-  }).catch(() => { /* ignore if cleanup endpoint not available */ });
-});
-
 test('Add user via UI saves first name, last name and email correctly @smoke', async ({ page }) => {
   const createUserPage = new CreateUserPage(page);
   await createUserPage.goto();
