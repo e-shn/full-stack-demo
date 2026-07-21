@@ -37,21 +37,15 @@ test('Add user via UI saves first name, last name and email correctly @smoke', a
   await expect(page.getByText(testUser.email)).toBeVisible();
 });
 
-test('Add user via UI shows error for duplicate email', async ({ page, request }) => {
-  // Pre-create user via API so we have a known duplicate
-  await request.post(`${BASE_URL}/api/users`, {
-    data: {
-      firstName: testUser.firstName,
-      lastName: testUser.lastName,
-      email: testUser.email,
-      password: testUser.password,
-    },
-  });
-
+test('Add user via UI shows error for duplicate email', async ({ page }) => {
+  // Alice already exists from beforeEach seed
+  const aliceEmail = 'alice@example.com';
+  
   const createUserPage = new CreateUserPage(page);
   await createUserPage.goto();
 
-  await createUserPage.fillForm(testUser.firstName, testUser.lastName, testUser.email, testUser.password);
+  // Try to create Alice again with same email
+  await createUserPage.fillForm('Alice', 'Johnson', aliceEmail, 'SecurePass123!');
   await createUserPage.submit();
 
   const alert = await createUserPage.getAlert();
