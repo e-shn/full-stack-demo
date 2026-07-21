@@ -14,6 +14,10 @@ import { test, expect } from '@playwright/test';
 
 const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
 
+test.beforeEach(async ({ request }) => {
+  await request.post(`${BASE_URL}/api/seed`);
+});
+
 test('GET /health returns { status: "ok" } @smoke', async ({ request }) => {
   const res = await request.get(`${BASE_URL}/health`);
 

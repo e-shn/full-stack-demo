@@ -18,6 +18,10 @@ const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
 
 test.describe('GET /api/users/:id/summary', () => {
 
+  test.beforeEach(async ({ request }) => {
+    await request.post(`${BASE_URL}/api/seed`);
+  });
+
   test('returns 200 with the expected JSON shape @smoke', async ({ request }) => {
     const res  = await request.get(`${BASE_URL}/api/users/1/summary`);
     expect(res.status()).toBe(200);

@@ -3,6 +3,10 @@ import { CreateUserPage } from '../pages/CreateUserPage';
 
 const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
 
+test.beforeEach(async ({ request }) => {
+  await request.post(`${BASE_URL}/api/seed`);
+});
+
 const testUser = {
   firstName: 'Jane',
   lastName: 'Doe',

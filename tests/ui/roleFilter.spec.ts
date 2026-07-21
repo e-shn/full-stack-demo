@@ -9,6 +9,10 @@ import { test, expect } from '@playwright/test';
 
 const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
 
+test.beforeEach(async ({ request }) => {
+  await request.post(`${BASE_URL}/api/seed`);
+});
+
 test('filtering by Admin role shows only Alice Johnson', async ({ page }) => {
   await page.goto(`${BASE_URL}/users`);
 
