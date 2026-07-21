@@ -17,6 +17,11 @@ test.beforeEach(async ({ request }) => {
     await request.post(`${BASE_URL}/api/seed`);
 });
 
+test.afterEach(async ({ request }) => {
+    // Re-seed after each test so parallel workers don't see stale deletions
+    await request.post(`${BASE_URL}/api/seed`);
+});
+
 test('deleting a user shows a confirmation message @smoke', async ({ page }) => {
     await page.goto(`${BASE_URL}/users`);
 
