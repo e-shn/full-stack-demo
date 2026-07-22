@@ -24,10 +24,6 @@ import { test, expect } from '@playwright/test';
 
 const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
 
-test.beforeEach(async ({ request }) => {
-  await request.post(`${BASE_URL}/api/seed`);
-});
-
 test('GET /api/llm/ask returns 200 with the correct shape @smoke', async ({ request }) => {
   const res = await request.get(`${BASE_URL}/api/llm/ask`);
 

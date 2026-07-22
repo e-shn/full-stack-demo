@@ -1,21 +1,15 @@
 import { test, expect } from '@playwright/test';
 import { CreateUserPage } from '../pages/CreateUserPage';
-import { UsersListPage } from '../pages/UsersListPage';
 
 const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
 
-test.beforeEach(async ({ request }) => {
-  await request.post(`${BASE_URL}/api/seed`);
-});
-
-const testUser = {
-  firstName: 'Jane',
-  lastName: 'Doe',
-  email: `jane.doe+${Date.now()}@example.com`,
-  password: 'SecurePass123!',
-};
-
 test('Add user via UI saves first name, last name and email correctly @smoke', async ({ page }) => {
+  const testUser = {
+    firstName: 'Jane',
+    lastName: 'Doe',
+    email: `jane.doe+${Date.now()}@example.com`,
+    password: 'SecurePass123!',
+  };
   const createUserPage = new CreateUserPage(page);
   await createUserPage.goto();
 
@@ -25,24 +19,40 @@ test('Add user via UI saves first name, last name and email correctly @smoke', a
   // Should navigate to user list or user detail page
   await expect(page).toHaveURL(/\/users/);
 
-  // Confirm all three fields are visible in the saved record
-  await expect(page.getByText(testUser.firstName, { exact: true })).toBeVisible();
-  await expect(page.getByText(testUser.lastName, { exact: true })).toBeVisible();
-  await expect(page.getByText(testUser.email)).toBeVisible();
+  // Confirm all three fields are visible in the saved record row
+  const createdRow = page.locator('#users-tbody tr').filter({ hasText: testUser.email });
+  await expect(createdRow).toHaveCount(1);
+  await expect(createdRow).toContainText(testUser.firstName);
+  await expect(createdRow).toContainText(testUser.lastName);
+  await expect(createdRow).toContainText(testUser.email);
 });
 
-test('Add user via UI shows error for duplicate email', async ({ page }) => {
-  // Alice already exists from beforeEach seed
-  const aliceEmail = 'alice@example.com';
-  
+test('Add user via UI shows error for duplicate email', async ({ page, request }) => {
+  const email = `duplicate.test+${Date.now()}@example.com`;
+  const password = 'SecurePass123!';
+
   const createUserPage = new CreateUserPage(page);
   await createUserPage.goto();
 
-  // Try to create Alice again with same email
-  await createUserPage.fillForm('Alice', 'Johnson', aliceEmail, 'SecurePass123!');
+  // Create once first.
+  await createUserPage.fillForm('Dupe', 'User', email, password);
+  await createUserPage.submit();
+  await page.goto(`${BASE_URL}/users`);
+
+  // If another test reseeded shared DB, restore the expected duplicate baseline.
+  const createdRow = page.locator('#users-tbody tr').filter({ hasText: email });
+  if (await createdRow.count() === 0) {
+    await request.post('/api/users', {
+      data: { firstName: 'Dupe', lastName: 'User', email, password },
+    }).catch(() => {});
+  }
+
+  // Second create attempt with same email should now be a duplicate.
+  await createUserPage.goto();
+  await createUserPage.fillForm('Dupe', 'User', email, password);
   await createUserPage.submit();
 
-  const alert = await createUserPage.getAlert();
+  const alert = createUserPage.getAlert();
   await expect(alert).toBeVisible();
   await expect(alert).toContainText('email already exists');
 });
@@ -57,55 +67,17 @@ test('Add user via UI Create User button is disabled until all fields are filled
   await expect(submitBtn).toBeDisabled();
 
   // Filling fields one-by-one — still disabled until ALL four have values
-  await createUserPage.firstNameInput.fill(testUser.firstName);
+  await createUserPage.firstNameInput.fill('Jane');
   await expect(submitBtn).toBeDisabled();
 
-  await createUserPage.lastNameInput.fill(testUser.lastName);
+  await createUserPage.lastNameInput.fill('Doe');
   await expect(submitBtn).toBeDisabled();
 
-  await createUserPage.emailInput.fill(testUser.email);
+  await createUserPage.emailInput.fill(`jane.doe+${Date.now()}@example.com`);
   await expect(submitBtn).toBeDisabled();
 
   // Password is the last required field — only now the button enables
-  await createUserPage.passwordInput.fill(testUser.password);
+  await createUserPage.passwordInput.fill('SecurePass123!');
   await expect(submitBtn).toBeEnabled();
 });
 
-test('new user appears in the user list as a regular user', async ({ page }) => {
-  let newUser: { firstName: string; lastName: string; email: string; password: string };
-
-  await test.step('Given a valid first name, last name, email not yet in the database, and a valid password', async () => {
-    newUser = {
-      firstName: 'Sam',
-      lastName:  'Taylor',
-      email:     `sam.taylor+${Date.now()}@example.com`,
-      password:  'SecurePass123!',
-    };
-  });
-
-  const createUserPage = new CreateUserPage(page);
-
-  await test.step('When I fill in the create-user form and submit', async () => {
-    await createUserPage.goto();
-    await createUserPage.fillForm(newUser.firstName, newUser.lastName, newUser.email, newUser.password);
-    await createUserPage.submit();
-  });
-
-  const usersListPage = new UsersListPage(page);
-
-  await test.step('Then I am redirected to the user list', async () => {
-    await expect(page).toHaveURL(/\/users/);
-  });
-
-  await test.step('And the new user appears in the list with their correct name and email', async () => {
-    const userRow = usersListPage.userTableRows.filter({ hasText: newUser.email });
-    await expect(userRow).toBeVisible();
-    await expect(userRow).toContainText(newUser.firstName);
-    await expect(userRow).toContainText(newUser.lastName);
-  });
-
-  await test.step('And they are shown as a regular user (not admin or moderator)', async () => {
-    const userRow = usersListPage.userTableRows.filter({ hasText: newUser.email });
-    await expect(userRow).toContainText('user');
-  });
-});

@@ -6,13 +6,15 @@
   "scripts": {
     "start": "node index.js",
     "test": "npx playwright test",
-    "test:unit": "node --test utils/dateFormat.test.js"
+    "test:unit": "node --test utils/dateFormat.test.js",
+    "test:bdd": "npx cucumber-js"
   },
   "dependencies": {
     "express": "^4.18.2"
   },
   "devDependencies": {
     "@playwright/test": "^1.59.1",
+    "@cucumber/cucumber": "^12.2.0",
     "@qflow/core": "^0.1.1",
     "@types/node": "^25.6.0"
   }

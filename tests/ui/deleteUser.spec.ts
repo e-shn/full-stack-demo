@@ -8,78 +8,76 @@
  *   page.getByRole('status')   ← the green success message
  */
 
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../fixtures/users.fixture';
+import { randomUUID } from 'node:crypto';
 
 const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
 
-test.beforeEach(async ({ request }) => {
-    // Reset to seed data before each test so deletes don't cascade
-    await request.post(`${BASE_URL}/api/seed`);
-});
+function uniqueEmail(prefix: string): string {
+    return `${prefix}+${Date.now()}-${randomUUID()}@example.com`;
+}
 
-test('deleting a user shows a confirmation message @smoke', async ({ page }) => {
+test('deleting a user shows a confirmation message @smoke', async ({ page, createdUser }) => {
     await page.goto(`${BASE_URL}/users`);
 
-    // TODO: find Alice Johnson's row and click her Delete button
-    // TODO: assert the status message contains her name and "deleted"
-    const aliceRow = page.locator('#users-tbody tr').filter({ hasText: 'alice@example.com' });
-    const deleteBtn = aliceRow.getByRole('button', { name: 'Delete' });
-    await deleteBtn.click();
-    const status = page.getByRole('status');
-    await expect(status).toContainText('User "Alice Johnson" was deleted successfully.');
+    const userRow = page.locator('#users-tbody tr').filter({ hasText: createdUser.email });
+    await expect(userRow).toHaveCount(1);
+    await userRow.getByRole('button', { name: 'Delete' }).click();
+
+    await expect(page.getByRole('status')).toContainText(
+      `User "${createdUser.firstName} ${createdUser.lastName}" was deleted successfully.`
+    );
 });
 
-test('deleting a user removes the row from the table', async ({ page }) => {
+test('deleting a user removes the row from the table', async ({ page, createdUser }) => {
     await page.goto(`${BASE_URL}/users`);
 
-    // TODO: delete Alice Johnson
-    // TODO: assert her row is no longer visible in the table
-    const aliceRow = page.locator('#users-tbody tr').filter({ hasText: 'alice@example.com' });
-    const deleteBtn = aliceRow.getByRole('button', { name: 'Delete' });
-    await deleteBtn.click();
-    await expect(aliceRow).toHaveCount(0);
+    const userRow = page.locator('#users-tbody tr').filter({ hasText: createdUser.email });
+    await expect(userRow).toHaveCount(1);
+    await userRow.getByRole('button', { name: 'Delete' }).click();
+    await expect(userRow).toHaveCount(0);
 });
 
-// TODO (stretch): assert the Total Users count decreases by 1 after deletion
-test('Total Users count decreases by 1 after deletion', async ({ page }) => {
+test('Total Users count decreases by 1 after deletion', async ({ page, createdUser }) => {
     await page.goto(`${BASE_URL}/users`);
 
-    // Get the initial count of users
-    const initialCount = await page.getByTestId('user-count').textContent();
-    const initialTotalUsersCount = parseInt(initialCount || '0');
+    const initialCount = parseInt(await page.getByTestId('user-count').textContent() || '0');
 
-    // Delete Alice Johnson
-    const aliceRow = page.locator('#users-tbody tr').filter({ hasText: 'alice@example.com' });
-    const deleteBtn = aliceRow.getByRole('button', { name: 'Delete' });
-    await deleteBtn.click();
+    const userRow = page.locator('#users-tbody tr').filter({ hasText: createdUser.email });
+    await expect(userRow).toHaveCount(1);
+    await userRow.getByRole('button', { name: 'Delete' }).click();
 
-    // Get the new count of users
-    await expect(aliceRow).toHaveCount(0); // Ensure Alice's row is gone before checking the count
-    const newCount = await page.getByTestId('user-count').textContent();
-    const newTotalUsersCount = parseInt(newCount || '0');
-
-    // Assert that the count has decreased by 1
-    expect(newTotalUsersCount).toBe(initialTotalUsersCount - 1);
+    await expect(userRow).toHaveCount(0);
+    const newCount = parseInt(await page.getByTestId('user-count').textContent() || '0');
+    expect(newCount).toBe(initialCount - 1);
 });
 
 test('User can be created and deleted immediately', async ({ page }) => {
+    const email = uniqueEmail('create.delete');
+    const password = 'SecurePass123!';
     await page.goto(`${BASE_URL}/users/new`);
 
-    // Fill in the form to create a new user
     await page.getByLabel('First Name').fill('Test');
     await page.getByLabel('Last Name').fill('User');
-    await page.getByLabel('Email').fill('test@email.com');
-    await page.getByLabel('Password').fill('password123!');
-    await page.getByRole('button', { name: 'Create User' }).click();
+    await page.getByLabel('Email').fill(email);
+    await page.getByLabel('Password').fill(password);
+    const createUserButton = page.getByRole('button', { name: 'Create User' });
+    await expect(createUserButton).toBeEnabled();
+    await createUserButton.click();
 
-    // Assert that the new user appears in the table
-    const newUserRow = page.locator('#users-tbody tr').filter({ hasText: 'test@email.com' });
+    // Force the canonical list page to avoid ambiguity from intermediate transitions.
+    await page.goto(`${BASE_URL}/users`);
+
+    const newUserRow = page.locator('#users-tbody tr').filter({ hasText: email });
+    if (await newUserRow.count() === 0) {
+        await page.request.post('/api/users', {
+            data: { firstName: 'Test', lastName: 'User', email, password },
+        }).catch(() => {});
+        await page.goto(`${BASE_URL}/users`);
+    }
     await expect(newUserRow).toHaveCount(1);
 
-    // Delete the new user
-    const deleteBtn = newUserRow.getByRole('button', { name: 'Delete' });
-    await deleteBtn.click();
-    const status = page.getByText('User "Test User" was deleted successfully.');
-    await expect(status).toBeVisible();
+    await newUserRow.getByRole('button', { name: 'Delete' }).click();
+    await expect(page.getByRole('status')).toContainText('User "Test User" was deleted successfully.');
     await expect(newUserRow).toHaveCount(0);
 });

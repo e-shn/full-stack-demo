@@ -14,8 +14,11 @@ const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
 
 test.describe('Locator practice — /users (list page)', () => {
 
-  test.beforeEach(async ({ page, request }) => {
+  test.beforeAll(async ({ request }) => {
     await request.post(`${BASE_URL}/api/seed`);
+  });
+
+  test.beforeEach(async ({ page }) => {
     await page.goto(`${BASE_URL}/users`);
   });
 

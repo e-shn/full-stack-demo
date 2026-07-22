@@ -1,4 +1,5 @@
 import { test as base } from '@playwright/test';
+import { randomUUID } from 'node:crypto';
 
 type User = {
   id:        number;
@@ -35,8 +36,8 @@ export const test = base.extend<UserFixtures>({
     await use();
   }, { auto: false }],
 
-  createdUser: async ({ request }, use) => {
-    const email = `fixture.user+${Date.now()}@example.com`;
+  createdUser: async ({ request }, use, testInfo) => {
+    const email = `fixture.user+${testInfo.workerIndex}-${Date.now()}-${randomUUID()}@example.com`;
 
     const res  = await request.post('/api/users', {
       data: { firstName: 'Fixture', lastName: 'User', email, password: 'TestPass123!' },

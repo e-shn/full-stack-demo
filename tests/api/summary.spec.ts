@@ -18,7 +18,7 @@ const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
 
 test.describe('GET /api/users/:id/summary', () => {
 
-  test.beforeEach(async ({ request }) => {
+  test.beforeAll(async ({ request }) => {
     await request.post(`${BASE_URL}/api/seed`);
   });
 

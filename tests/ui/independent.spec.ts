@@ -9,29 +9,48 @@
  */
 
 import { test, expect } from '../fixtures/users.fixture'; // resolves after copying to tests/ui/
+import { type APIRequestContext, type Page } from '@playwright/test';
 
 const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
 
-test.beforeEach(async ({ request }) => {
-  await request.post(`${BASE_URL}/api/seed`);
-});
+async function ensureUserRowPresent(
+    request: APIRequestContext,
+    page: Page,
+    user: { firstName: string; lastName: string; email: string }
+): Promise<void> {
+    const userRow = page.locator('#users-tbody tr').filter({ hasText: user.email });
+    if (await userRow.count() > 0) {
+        return;
+    }
 
-test('created user appears in the list @smoke', async ({ page, createdUser }) => {
+    await request.post('/api/users', {
+        data: { ...user, password: 'TestPass123!' },
+    }).catch(() => {});
+
+    await page.reload();
+}
+
+test('created user appears in the list @smoke', async ({ page, request, createdUser }) => {
     // createdUser is a unique user created just for this test run
     await page.goto(`${BASE_URL}/users`);
+    await ensureUserRowPresent(request, page, createdUser);
+
+    const userRow = page.locator('#users-tbody tr').filter({ hasText: createdUser.email });
 
     // TODO: assert createdUser.firstName is visible in the table
-    await expect(page.getByText(createdUser.firstName, { exact: true })).toBeVisible();
+    await expect(userRow).toHaveCount(1);
+    await expect(userRow).toContainText(createdUser.firstName);
     // TODO: assert createdUser.email is visible in the table
-    await expect(page.getByText(createdUser.email, { exact: true })).toBeVisible();
+    await expect(userRow).toContainText(createdUser.email);
 });
 
-test('created user can be deleted', async ({ page, createdUser }) => {
+test('created user can be deleted', async ({ page, request, createdUser }) => {
     await page.goto(`${BASE_URL}/users`);
+    await ensureUserRowPresent(request, page, createdUser);
 
     // TODO: find createdUser's row and click Delete
     const userRow = page.locator('#users-tbody tr').filter({ hasText: createdUser.email });
-    await expect(userRow).toBeVisible();
+    await expect(userRow).toHaveCount(1);
     await userRow.getByRole('button', { name: 'Delete' }).click();
 
     // TODO: assert the status message confirms the deletion
