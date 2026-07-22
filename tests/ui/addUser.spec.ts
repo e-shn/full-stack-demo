@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { CreateUserPage } from '../pages/CreateUserPage';
+import { UsersListPage } from '../pages/UsersListPage';
 
 const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
 
@@ -68,4 +69,43 @@ test('Add user via UI Create User button is disabled until all fields are filled
   // Password is the last required field — only now the button enables
   await createUserPage.passwordInput.fill(testUser.password);
   await expect(submitBtn).toBeEnabled();
+});
+
+test('new user appears in the user list as a regular user', async ({ page }) => {
+  let newUser: { firstName: string; lastName: string; email: string; password: string };
+
+  await test.step('Given a valid first name, last name, email not yet in the database, and a valid password', async () => {
+    newUser = {
+      firstName: 'Sam',
+      lastName:  'Taylor',
+      email:     `sam.taylor+${Date.now()}@example.com`,
+      password:  'SecurePass123!',
+    };
+  });
+
+  const createUserPage = new CreateUserPage(page);
+
+  await test.step('When I fill in the create-user form and submit', async () => {
+    await createUserPage.goto();
+    await createUserPage.fillForm(newUser.firstName, newUser.lastName, newUser.email, newUser.password);
+    await createUserPage.submit();
+  });
+
+  const usersListPage = new UsersListPage(page);
+
+  await test.step('Then I am redirected to the user list', async () => {
+    await expect(page).toHaveURL(/\/users/);
+  });
+
+  await test.step('And the new user appears in the list with their correct name and email', async () => {
+    const userRow = usersListPage.userTableRows.filter({ hasText: newUser.email });
+    await expect(userRow).toBeVisible();
+    await expect(userRow).toContainText(newUser.firstName);
+    await expect(userRow).toContainText(newUser.lastName);
+  });
+
+  await test.step('And they are shown as a regular user (not admin or moderator)', async () => {
+    const userRow = usersListPage.userTableRows.filter({ hasText: newUser.email });
+    await expect(userRow).toContainText('user');
+  });
 });
