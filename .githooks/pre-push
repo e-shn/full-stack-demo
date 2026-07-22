@@ -1,0 +1,10 @@
+#!/bin/sh
+set -e
+
+if [ "$SKIP_PREPUSH_TESTS" = "1" ]; then
+  echo "[pre-push] SKIP_PREPUSH_TESTS=1 set, skipping test gate."
+  exit 0
+fi
+
+echo "[pre-push] Running unit + concurrent e2e gate..."
+npm run test:e2e:prepush

@@ -54,3 +54,28 @@ npm start
 ```
 
 Then open http://localhost:3000.
+
+## Test Concurrency Guard (Recommended)
+
+Install the repository pre-push hook once:
+
+```bash
+npm run hooks:install
+```
+
+What it does on every push:
+
+- Runs unit tests
+- Runs Playwright in concurrent stress mode (`--workers=4 --repeat-each=2`)
+
+Manual command (same gate as the hook):
+
+```bash
+npm run test:e2e:prepush
+```
+
+Temporary bypass (if absolutely needed):
+
+```bash
+SKIP_PREPUSH_TESTS=1 git push
+```

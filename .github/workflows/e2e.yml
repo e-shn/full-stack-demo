@@ -34,8 +34,8 @@ jobs:
       - name: Run unit tests
         run: npm run test:unit
 
-      - name: Run Playwright tests
-        run: npx playwright test
+      - name: Run Playwright tests (concurrency stress)
+        run: npm run test:e2e:concurrent
 
       - name: Upload HTML report
         if: always()

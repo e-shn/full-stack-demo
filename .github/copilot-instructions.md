@@ -10,13 +10,17 @@ When making any changes to test files in this repository, follow this rule befor
 
 After editing tests, run:
 
-- `npx playwright test`
+- `npm run test:e2e:concurrent`
 
 If the suite fails, do not finalize the change until:
 
 - failing tests are fixed,
 - shared-state collisions are removed,
 - and the full suite passes in the current branch.
+
+For local commits/pushes, install and use the repository pre-push hook:
+
+- `npm run hooks:install`
 
 ## Parallel-Safety Expectations
 

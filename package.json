@@ -6,6 +6,10 @@
   "scripts": {
     "start": "node index.js",
     "test": "npx playwright test",
+    "test:e2e:ci": "npx playwright test --workers=4 --retries=0",
+    "test:e2e:concurrent": "npx playwright test --workers=4 --retries=0 --repeat-each=2",
+    "test:e2e:prepush": "npm run test:unit && npm run test:e2e:concurrent",
+    "hooks:install": "git config core.hooksPath .githooks && chmod +x .githooks/pre-push",
     "test:unit": "node --test utils/dateFormat.test.js",
     "test:bdd": "npx cucumber-js"
   },

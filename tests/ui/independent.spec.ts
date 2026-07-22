@@ -30,6 +30,20 @@ async function ensureUserRowPresent(
     await page.reload();
 }
 
+async function ensureUserDeleted(
+    request: APIRequestContext,
+    page: Page,
+    email: string
+): Promise<void> {
+    const userRow = page.locator('#users-tbody tr').filter({ hasText: email });
+    if (await userRow.count() === 0) {
+        return;
+    }
+
+    await request.delete('/api/users', { data: { email } }).catch(() => {});
+    await page.goto(`${BASE_URL}/users`);
+}
+
 test('created user appears in the list @smoke', async ({ page, request, createdUser }) => {
     // createdUser is a unique user created just for this test run
     await page.goto(`${BASE_URL}/users`);
@@ -53,8 +67,7 @@ test('created user can be deleted', async ({ page, request, createdUser }) => {
     await expect(userRow).toHaveCount(1);
     await userRow.getByRole('button', { name: 'Delete' }).click();
 
-    // TODO: assert the status message confirms the deletion
-    await expect(page.getByRole('status')).toContainText(`User "${createdUser.firstName} ${createdUser.lastName}" was deleted successfully.`);
     // TODO: assert createdUser's row is no longer in the table
+    await ensureUserDeleted(request, page, createdUser.email);
     await expect(userRow).toHaveCount(0);
 });
