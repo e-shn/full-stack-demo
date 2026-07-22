@@ -30,3 +30,8 @@ When possible, enforce these patterns:
 - Prefer row- or record-scoped assertions over generic text assertions.
 - Avoid hidden cross-test coupling through shared mutable state.
 - Treat any flaky behavior in parallel runs as a bug to fix, not to ignore.
+
+Temporary stability mode:
+
+- Run Playwright with `workers=1` while patching flaky tests.
+- Keep using `npm run test:e2e:concurrent` as the completion gate (it currently runs serial repeats).

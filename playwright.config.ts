@@ -5,7 +5,7 @@ const baseURL = process.env.BASE_URL || 'http://localhost:3000';
 export default defineConfig({
   testDir: './tests',
   fullyParallel: false,
-  workers: 4,
+  workers: 1,
   reporter: [['html']],
   webServer: process.env.CI ? undefined : {
     command: 'npm run start',
